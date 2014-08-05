@@ -1,0 +1,33 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+.app-container {
+	background: #1f8dd6;
+	width: 100%;
+	height: 400px;
+}
+
+.app {
+	width: 50%;
+	height: 50%;
+	margin: auto;
+	padding-top: 100px;
+}
+
+.app-status {
+	text-align: center;
+	font-size: 350%;
+	color: #ffffff;
+}
+
+.app .timer {
+	text-align: center;
+}
+
+.app .timer .numbers {
+	font-size: 72pt;
+	font-weight: 600;
+}
