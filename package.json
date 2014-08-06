@@ -1,0 +1,22 @@
+{
+  "name": "blink-pomo",
+  "version": "0.0.1",
+  "description": "Blink-Pomo Frontend",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/siyegen/blink-pomo.git"
+  },
+  "author": "David Tomberlin <siyegen@gmail.com>",
+  "license": "BSD-2-Clause",
+  "bugs": {
+    "url": "https://github.com/siyegen/blink-pomo/issues"
+  },
+  "devDependencies": {
+    "browserify": "~5.9.1",
+    "backbone": "~1.1.2"
+  }
+}
