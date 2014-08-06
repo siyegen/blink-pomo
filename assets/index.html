@@ -13,12 +13,13 @@
 	</head>
 	<body>
 		<div class="app-container">
-			<div class="app">
+			<div class="app" role="app">
 				<h1 class="app-status">Blink-Pom</h1>
-				<div class="timer">
-					<span class="numbers">01:23</span>
+				<div class="timer" role="timer">
+					<span class="numbers" role="counter">00:00</span>
 					<span class="controls">
-						<button class="pure-button">Start!</button>
+						<button class="pure-button" role="start-pom">Start!</button>
+						<button class="pure-button" role="stop-pom">Stop!</button>
 						<button class="pure-button">Cancel</button>
 					</span>
 				</div>
