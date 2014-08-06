@@ -1,1 +1,1 @@
-module.exports = {"moo": 2};
+module.exports = {"moo": "working better now"};
