@@ -12,12 +12,48 @@ import (
 	"time"
 )
 
+const LogPrefix = "[BlinkApp]"
+
 type BlinkApp struct {
 	currentPoms map[string]*Pom
 }
 
 func NewBlinkApp() *BlinkApp {
 	return &BlinkApp{make(map[string]*Pom)}
+}
+
+func jsonEndpoint(handler http.HandlerFunc) http.HandlerFunc {
+	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
+		log.Print(LogPrefix, req.URL)
+		res.Header().Set("Content-Type", "application/json")
+		handler(res, req)
+	})
+}
+
+func (b *BlinkApp) StartPom(res http.ResponseWriter, req *http.Request) {
+	pom := NewPom()
+	b.StorePom(pom)
+
+	go pom.StartTimer()
+	res.Write(pom.ToJSON())
+}
+
+func (b *BlinkApp) GetPom(res http.ResponseWriter, req *http.Request) {
+	log.Print("Loading exsisting Pom")
+	vars := mux.Vars(req)
+	pom, ok := b.currentPoms[vars["id"]]
+	if !ok {
+		log.Print("No pom :(")
+		res.WriteHeader(http.StatusNotFound)
+		res.Write([]byte(`{"error": "No Pom Found"}`))
+		return
+	}
+	log.Printf("Pom-%s => seconds %d", vars["id"], pom.seconds)
+	res.Write(pom.ToJSON())
+}
+
+func (b *BlinkApp) StorePom(pom *Pom) {
+	b.currentPoms[pom.id] = pom
 }
 
 func newUUID() string {
@@ -29,7 +65,8 @@ func newUUID() string {
 }
 
 type pomResponse struct {
-	UUID string `json:"uuid"`
+	UUID      string `json:"uuid"`
+	StartTime int64  `json:"start_time"`
 }
 
 type Pom struct {
@@ -37,14 +74,29 @@ type Pom struct {
 	ticker    *time.Ticker
 	startTime int64
 	seconds   int
+	id        string
 }
 
 func NewPom() *Pom {
 	return &Pom{
-		time.NewTimer(25 * time.Minute),
-		time.NewTicker(5 * time.Second),
-		time.Now().Unix(),
-		0,
+		timer:     time.NewTimer(25 * time.Minute),
+		ticker:    time.NewTicker(5 * time.Second),
+		startTime: time.Now().Unix(),
+		seconds:   0,
+		id:        newUUID(),
+	}
+}
+
+func (p *Pom) ToJSON() []byte {
+	pomRes := pomResponse{p.id, p.startTime}
+	jsonRes, _ := json.Marshal(pomRes)
+	return jsonRes
+}
+
+func (p *Pom) StartTimer() {
+	for t := range p.ticker.C {
+		log.Print(t)
+		p.seconds += 5
 	}
 }
 
@@ -54,21 +106,7 @@ func main() {
 	app := NewBlinkApp()
 	r := mux.NewRouter()
 
-	r.HandleFunc("/pom", func(res http.ResponseWriter, req *http.Request) {
-		log.Print("Creating new Pom")
-
-		pom := NewPom()
-		go func() {
-			for t := range pom.ticker.C {
-				log.Print(t)
-				pom.seconds += 5
-			}
-		}()
-		pomRes := pomResponse{newUUID()}
-		app.currentPoms[pomRes.UUID] = pom
-		jsonRes, _ := json.Marshal(pomRes)
-		res.Write(jsonRes)
-	}).Methods("POST")
+	r.HandleFunc("/pom", jsonEndpoint(app.StartPom)).Methods("POST")
 
 	r.HandleFunc("/pom/{id}", func(res http.ResponseWriter, req *http.Request) {
 		log.Print("Starting pom for exsisting timer")
@@ -76,16 +114,7 @@ func main() {
 		res.Write([]byte(fmt.Sprintf("endpoint: /pom%s", vars["id"])))
 	}).Methods("POST")
 
-	r.HandleFunc("/pom/{id}", func(res http.ResponseWriter, req *http.Request) {
-		log.Print("Loading exsisting Pom")
-		vars := mux.Vars(req)
-		pom, ok := app.currentPoms[vars["id"]]
-		if !ok {
-			log.Print("No pom :(")
-			res.Write([]byte("No pom"))
-		}
-		log.Printf("Pom-%s => seconds %d", vars["id"], pom.seconds)
-	}).Methods("GET")
+	r.HandleFunc("/pom/{id}", jsonEndpoint(app.GetPom)).Methods("GET")
 
 	r.PathPrefix("/").Handler(http.FileServer(http.Dir("assets")))
 	http.ListenAndServe(":9913", r)
