@@ -70,14 +70,18 @@ app.gun = _.extend({}, Backbone.Events);
 console.log("work fucker");
 var Workspace = Backbone.Router.extend({
 	routes: {
-		'': 'dashboard'
+		'': 'dashboard',
+		'/:uuid': 'pom'
 	},
 	initialize: function() {
 		console.log("router start");
 	},
-	dashboard: function(){
+	dashboard: function() {
 		console.log("on dashboard");
 		app.dashboard = new BlinkPomo({model: new PomModel(), gun: app.gun});
+	},
+	pom: function(uuid) {
+		console.log("uuid", uuid);
 	}
 });
 
@@ -89,5 +93,5 @@ app.gun.on('pom:start', function(pom) {
 
 console.log(
 	"App?",
-	Backbone.history.start({pushState: true, silent: false})
+	Backbone.history.start({pushState: false, silent: false})
 );

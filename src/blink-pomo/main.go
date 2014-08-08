@@ -116,6 +116,7 @@ func main() {
 
 	r.HandleFunc("/pom/{id}", jsonEndpoint(app.GetPom)).Methods("GET")
 
+	r.Path("/{uuid}").Handler(http.FileServer(http.Dir("assets")))
 	r.PathPrefix("/").Handler(http.FileServer(http.Dir("assets")))
 	http.ListenAndServe(":9913", r)
 }
