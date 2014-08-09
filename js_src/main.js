@@ -71,7 +71,7 @@ console.log("work fucker");
 var Workspace = Backbone.Router.extend({
 	routes: {
 		'': 'dashboard',
-		'/:uuid': 'pom'
+		'p/:uuid': 'pom'
 	},
 	initialize: function() {
 		console.log("router start");
@@ -88,10 +88,10 @@ var Workspace = Backbone.Router.extend({
 app.router = new Workspace();
 
 app.gun.on('pom:start', function(pom) {
-	app.router.navigate("/" + pom.id);
+	app.router.navigate("/p/" + pom.id);
 });
 
 console.log(
 	"App?",
-	Backbone.history.start({pushState: false, silent: false})
+	Backbone.history.start({pushState: true, silent: false})
 );

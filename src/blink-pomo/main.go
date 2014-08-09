@@ -14,14 +14,6 @@ import (
 
 const LogPrefix = "[BlinkApp]"
 
-type BlinkApp struct {
-	currentPoms map[string]*Pom
-}
-
-func NewBlinkApp() *BlinkApp {
-	return &BlinkApp{make(map[string]*Pom)}
-}
-
 func jsonEndpoint(handler http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
 		log.Print(LogPrefix, req.URL)
@@ -30,25 +22,38 @@ func jsonEndpoint(handler http.HandlerFunc) http.HandlerFunc {
 	})
 }
 
+type BlinkApp struct {
+	currentPoms map[string]*Pom
+}
+
+func NewBlinkApp() *BlinkApp {
+	return &BlinkApp{make(map[string]*Pom)}
+}
+
+func logLine(msg string) {
+	log.Printf("%s %s\n", LogPrefix, msg)
+}
+
 func (b *BlinkApp) StartPom(res http.ResponseWriter, req *http.Request) {
 	pom := NewPom()
 	b.StorePom(pom)
 
+	logLine(fmt.Sprintf("Creating Pom %s", pom.id))
 	go pom.StartTimer()
 	res.Write(pom.ToJSON())
 }
 
 func (b *BlinkApp) GetPom(res http.ResponseWriter, req *http.Request) {
-	log.Print("Loading exsisting Pom")
+	logLine("Loading exsisting Pom")
 	vars := mux.Vars(req)
 	pom, ok := b.currentPoms[vars["id"]]
 	if !ok {
-		log.Print("No pom :(")
+		logLine("No pom :(")
 		res.WriteHeader(http.StatusNotFound)
 		res.Write([]byte(`{"error": "No Pom Found"}`))
 		return
 	}
-	log.Printf("Pom-%s => seconds %d", vars["id"], pom.seconds)
+	logLine(fmt.Sprintf("Pom-%s => seconds %d", vars["id"], pom.seconds))
 	res.Write(pom.ToJSON())
 }
 
@@ -100,23 +105,45 @@ func (p *Pom) StartTimer() {
 	}
 }
 
+func (p *Pom) StopTimer() {
+	p.ticker.Stop()
+}
+
 func main() {
 	fmt.Println("blink-pomo: Pretty lights and productivity")
 
 	app := NewBlinkApp()
 	r := mux.NewRouter()
 
+	//consider grouping under api
 	r.HandleFunc("/pom", jsonEndpoint(app.StartPom)).Methods("POST")
 
-	r.HandleFunc("/pom/{id}", func(res http.ResponseWriter, req *http.Request) {
-		log.Print("Starting pom for exsisting timer")
+	r.HandleFunc("/pom/stop/{id}", func(res http.ResponseWriter, req *http.Request) {
+		vars := mux.Vars(req)
+		logLine(fmt.Sprintf("Stoping pom for %s", vars["id"]))
+
+		pom, ok := app.currentPoms[vars["id"]]
+		if !ok {
+			logLine("No pom :(")
+			res.WriteHeader(http.StatusNotFound)
+			res.Write([]byte(`{"error": "No Pom Found"}`))
+			return
+		}
+		pom.StopTimer()
+	}).Methods("POST")
+
+	r.HandleFunc("/pom/start/{id}", func(res http.ResponseWriter, req *http.Request) {
+		logLine("Starting pom for exsisting timer")
 		vars := mux.Vars(req)
 		res.Write([]byte(fmt.Sprintf("endpoint: /pom%s", vars["id"])))
 	}).Methods("POST")
 
 	r.HandleFunc("/pom/{id}", jsonEndpoint(app.GetPom)).Methods("GET")
 
-	r.Path("/{uuid}").Handler(http.FileServer(http.Dir("assets")))
+	r.HandleFunc("/p/{id}", func(res http.ResponseWriter, req *http.Request) {
+		logLine(fmt.Sprintf("loading app for %s", mux.Vars(req)["id"]))
+		http.ServeFile(res, req, "assets")
+	})
 	r.PathPrefix("/").Handler(http.FileServer(http.Dir("assets")))
 	http.ListenAndServe(":9913", r)
 }
