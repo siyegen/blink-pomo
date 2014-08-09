@@ -10,6 +10,13 @@ var PomModel = Backbone.Model.extend({
 		return {seconds: 0, state: 'stopped'};
 		console.log(this);
 	},
+	sync: function(method, model, options) {
+		if (options.action !== undefined) {
+			options.url = [model.urlRoot,options.action,model.id].join("/")
+			method = "create"
+		}
+		return Backbone.sync(method, model, options);
+	},
 	start: function() {
 		var self = this;
 		this.set('state', 'started');
@@ -20,8 +27,10 @@ var PomModel = Backbone.Model.extend({
 		// Post to api, set url
 		this.save({}, {wait: true});
 	},
-	stop : function() {
+	stop: function() {
 		this.set('state', 'stopped');
+		this.set('seconds', 0);
+		this.save({}, {action: "stop"})
 		clearInterval(this.counter);
 	},
 	formatCounter: function() {
@@ -39,7 +48,6 @@ var BlinkPomo = Backbone.View.extend({
 	},
 	initialize: function(opts) {
 		this.gun = opts.gun;
-		console.log("gun", this.gun);
 		this.timer = this.$('[role=timer]');
 		this.model.on('change:seconds', this.render, this)
 		this.model.on('sync', function(){
@@ -49,7 +57,6 @@ var BlinkPomo = Backbone.View.extend({
 		this.render();
 	},
 	render: function() {
-		console.log('called render');
 		this.counter.text(this.model.formatCounter());
 	},
 	start: function(){
