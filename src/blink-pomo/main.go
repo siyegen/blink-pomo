@@ -115,6 +115,20 @@ func main() {
 	app := NewBlinkApp()
 	r := mux.NewRouter()
 
+	r.HandleFunc("/status/{id}", func(res http.ResponseWriter, req *http.Request) {
+		id := mux.Vars(req)["id"]
+		pom := app.currentPoms[id]
+		logLine("checking status")
+		if pom.seconds > 45 {
+			res.Write([]byte("#00FF00\n"))
+			return
+		} else if pom.seconds > 10 {
+			res.Write([]byte("#FF0000\n"))
+			return
+		}
+		res.Write([]byte("#FFFFFF\n"))
+	})
+
 	//consider grouping under api
 	r.HandleFunc("/pom", jsonEndpoint(app.StartPom)).Methods("POST")
 
