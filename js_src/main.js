@@ -18,19 +18,27 @@ var PomModel = Backbone.Model.extend({
 		return Backbone.sync(method, model, options);
 	},
 	start: function() {
+		if (!this.isNew()) {
+			console.log("Can't start without a chrono");
+			return
+		}
 		var self = this;
 		this.set('state', 'started');
+		this.save({}, {wait: true});
 		this.counter = setInterval(function() {
 			var update = self.get('seconds')+1;
 			self.set('seconds', update);
 		}, 1000);
-		// Post to api, set url
-		this.save({}, {wait: true});
 	},
 	stop: function() {
-		this.set('state', 'stopped');
-		this.set('seconds', 0);
-		this.save({}, {action: "stop"})
+		if (!this.isNew()) {
+			console.log("Can't stop without a chrono");
+			return
+		}
+		// this.set('state', 'stopped');
+		// this.set('seconds', 0);
+		// this.save({}, {action: "stop"})
+		this.save({'state': 'stopped', 'seconds': 0});
 		clearInterval(this.counter);
 	},
 	formatCounter: function() {
@@ -77,8 +85,8 @@ app.gun = _.extend({}, Backbone.Events);
 console.log("work fucker");
 var Workspace = Backbone.Router.extend({
 	routes: {
-		'': 'dashboard',
-		'p/:uuid': 'pom'
+		'chrono/': 'dashboard',
+		'chrono/:uuid': 'pom'
 	},
 	initialize: function() {
 		console.log("router start");
@@ -95,7 +103,7 @@ var Workspace = Backbone.Router.extend({
 app.router = new Workspace();
 
 app.gun.on('pom:start', function(pom) {
-	app.router.navigate("/p/" + pom.id);
+	app.router.navigate("/chrono/" + pom.id);
 });
 
 console.log(
