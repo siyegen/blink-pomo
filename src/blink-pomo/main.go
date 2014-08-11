@@ -41,10 +41,10 @@ func main() {
 			return
 		}
 		logLine("checking status")
-		if pom.seconds > 45 {
+		if pom.flag == "started" {
 			res.Write([]byte("#00FF00\n"))
 			return
-		} else if pom.seconds > 10 {
+		} else if pom.flag == "stopped" {
 			res.Write([]byte("#FF0000\n"))
 			return
 		}
@@ -53,15 +53,7 @@ func main() {
 
 	// API Endpoints
 	r.HandleFunc("/pom", jsonEndpoint(app.CreateChrono)).Methods("POST")
-	// r.HandleFunc("/pom/{id}", jsonEndpoint(app.CreatePom)).Methods("PUT")
-	r.HandleFunc("/pom/stop/{id}", jsonEndpoint(app.StopPom)).Methods("POST")
-
-	r.HandleFunc("/pom/start/{id}", func(res http.ResponseWriter, req *http.Request) {
-		logLine("Starting pom for exsisting timer")
-		vars := mux.Vars(req)
-		res.Write([]byte(fmt.Sprintf("endpoint: /pom%s", vars["id"])))
-	}).Methods("POST")
-
+	r.HandleFunc("/pom/{id}", jsonEndpoint(app.UpdatePom)).Methods("PUT")
 	r.HandleFunc("/pom/{id}", jsonEndpoint(app.GetPom)).Methods("GET")
 
 	// Static calls

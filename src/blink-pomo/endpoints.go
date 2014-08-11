@@ -1,11 +1,17 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/gorilla/mux"
+	"io/ioutil"
 	"log"
 	"net/http"
 )
+
+type pomAction struct {
+	State string `json:"state"`
+}
 
 func jsonEndpoint(handler http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(res http.ResponseWriter, req *http.Request) {
@@ -24,9 +30,9 @@ func (b *BlinkApp) CreateChrono(res http.ResponseWriter, req *http.Request) {
 	res.Write(pom.ToJSON())
 }
 
-func (b *BlinkApp) StopPom(res http.ResponseWriter, req *http.Request) {
+func (b *BlinkApp) UpdatePom(res http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
-	logLine(fmt.Sprintf("Stoping pom for %s", vars["id"]))
+	logLine(fmt.Sprintf("Updating pom for %s", vars["id"]))
 
 	pom, ok := b.currentPoms[vars["id"]]
 	if !ok {
@@ -35,7 +41,35 @@ func (b *BlinkApp) StopPom(res http.ResponseWriter, req *http.Request) {
 		res.Write([]byte(`{"error": "No Pom Found"}`))
 		return
 	}
-	pom.StopTimer()
+
+	body, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		logLine("No valid body")
+		res.WriteHeader(http.StatusBadRequest)
+		res.Write([]byte(`{"error": "Couldn't ready request"}`))
+		return
+	}
+
+	var action pomAction
+	err = json.Unmarshal(body, &action)
+	if err != nil {
+		logLine("No action")
+		res.WriteHeader(http.StatusBadRequest)
+		res.Write([]byte(`{"error": "Invalid Request"}`))
+		return
+	}
+	if action.State == "starting" {
+		pom.StartTimer()
+		return
+	} else if action.State == "stopping" {
+		pom.StopTimer()
+		return
+	}
+
+	logLine(fmt.Sprintf("Invalid action %s", action.State))
+	res.WriteHeader(http.StatusBadRequest)
+	res.Write([]byte(`{"error": "Invalid Request"}`))
+	return
 }
 
 func (b *BlinkApp) GetPom(res http.ResponseWriter, req *http.Request) {

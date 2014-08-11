@@ -24,7 +24,6 @@ func NewPom() *Pom {
 	return &Pom{
 		timer:     time.NewTimer(25 * time.Minute),
 		ticker:    time.NewTicker(5 * time.Second),
-		flag:      "started",
 		startTime: time.Now().Unix(),
 		seconds:   0,
 		id:        newUUID(),
@@ -38,6 +37,7 @@ func (p *Pom) ToJSON() []byte {
 }
 
 func (p *Pom) StartTimer() {
+	p.flag = "started"
 	for t := range p.ticker.C {
 		log.Print(t)
 		p.seconds += 5
@@ -46,4 +46,5 @@ func (p *Pom) StartTimer() {
 
 func (p *Pom) StopTimer() {
 	p.ticker.Stop()
+	p.flag = "stopped"
 }
