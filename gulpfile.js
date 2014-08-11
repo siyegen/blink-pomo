@@ -3,6 +3,7 @@ var browserify = require('gulp-browserify');
 var concat = require('gulp-concat');
 
 gulp.task('dev', function() {
+	gulp.start('browserify');
 	gulp.watch('./js_src/**/*.js', ['browserify']);
 });
 
