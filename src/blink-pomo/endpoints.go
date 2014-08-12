@@ -21,6 +21,27 @@ func jsonEndpoint(handler http.HandlerFunc) http.HandlerFunc {
 	})
 }
 
+func (b *BlinkApp) PomStatus(res http.ResponseWriter, req *http.Request) {
+	id := mux.Vars(req)["id"]
+	pom, ok := b.currentPoms[id]
+	if !ok {
+		logLine(fmt.Sprintf("No pom: %s", id))
+		res.WriteHeader(http.StatusNotFound)
+		res.Write([]byte(`{"error": "No Pom Found"}`))
+		res.Write([]byte("#000000\n"))
+		return
+	}
+	logLine("checking status")
+	if pom.flag == "started" {
+		res.Write([]byte("#00FF00\n"))
+		return
+	} else if pom.flag == "stopped" {
+		res.Write([]byte("#FF0000\n"))
+		return
+	}
+	res.Write([]byte("#FFFFFF\n"))
+}
+
 func (b *BlinkApp) CreateChrono(res http.ResponseWriter, req *http.Request) {
 	pom := NewPom()
 	b.StorePom(pom)

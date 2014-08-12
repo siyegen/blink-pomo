@@ -30,26 +30,7 @@ func main() {
 	app := NewBlinkApp()
 	r := mux.NewRouter()
 
-	r.HandleFunc("/status/{id}", func(res http.ResponseWriter, req *http.Request) {
-		id := mux.Vars(req)["id"]
-		pom, ok := app.currentPoms[id]
-		if !ok {
-			logLine(fmt.Sprintf("No pom: %s", id))
-			res.WriteHeader(http.StatusNotFound)
-			res.Write([]byte(`{"error": "No Pom Found"}`))
-			res.Write([]byte("#000000\n"))
-			return
-		}
-		logLine("checking status")
-		if pom.flag == "started" {
-			res.Write([]byte("#00FF00\n"))
-			return
-		} else if pom.flag == "stopped" {
-			res.Write([]byte("#FF0000\n"))
-			return
-		}
-		res.Write([]byte("#FFFFFF\n"))
-	})
+	r.HandleFunc("/status/{id}", app.PomStatus).Methods("GET")
 
 	// API Endpoints
 	r.HandleFunc("/pom", jsonEndpoint(app.CreateChrono)).Methods("POST")
