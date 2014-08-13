@@ -7,14 +7,16 @@ import (
 )
 
 type pomResponse struct {
-	UUID      string `json:"uuid"`
-	StartTime int64  `json:"start_time"`
+	UUID      string   `json:"uuid"`
+	StartTime int64    `json:"start_time"`
+	State     PomState `json:"state"`
+	Seconds   int      `json:"seconds"`
 }
 
 type Pom struct {
 	timer     *time.Timer
 	ticker    *time.Ticker
-	flag      string
+	state     PomState
 	startTime int64
 	seconds   int
 	id        string
@@ -31,13 +33,13 @@ func NewPom() *Pom {
 }
 
 func (p *Pom) ToJSON() []byte {
-	pomRes := pomResponse{p.id, p.startTime}
+	pomRes := pomResponse{p.id, p.startTime, p.state, p.seconds}
 	jsonRes, _ := json.Marshal(pomRes)
 	return jsonRes
 }
 
 func (p *Pom) StartTimer() {
-	p.flag = "started"
+	p.state = pomStart
 	for t := range p.ticker.C {
 		log.Print(t)
 		p.seconds += 5
@@ -46,5 +48,5 @@ func (p *Pom) StartTimer() {
 
 func (p *Pom) StopTimer() {
 	p.ticker.Stop()
-	p.flag = "stopped"
+	p.state = pomStop
 }

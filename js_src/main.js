@@ -11,10 +11,13 @@ var PomModel = Backbone.Model.extend({
 		console.log(this);
 	},
 	sync: function(method, model, options) {
-		if (options.action !== undefined) {
-			options.url = [model.urlRoot,options.action,model.id].join("/")
-			method = "create"
-		}
+		console.log('calling sync');
+		// if (options.action !== undefined) {
+		// 	options.url = [model.urlRoot,options.action,model.id].join("/")
+		// 	method = "create"
+		// }
+		console.log(method, model, options);
+		console.log("mooo", model.url(), model.get('id'));
 		return Backbone.sync(method, model, options);
 	},
 	start: function() {
@@ -23,7 +26,7 @@ var PomModel = Backbone.Model.extend({
 			return
 		}
 		var self = this;
-		this.save({'state': 'starting'}, {wait: true});
+		this.save({'state': 'started'}, {wait: true});
 		this.counter = setInterval(function() {
 			var update = self.get('seconds')+1;
 			self.set('seconds', update);
@@ -34,7 +37,7 @@ var PomModel = Backbone.Model.extend({
 			console.log("Can't stop without a chrono");
 			return
 		}
-		this.save({'state': 'stopping', 'seconds': 0});
+		this.save({'state': 'stopped', 'seconds': 0});
 		clearInterval(this.counter);
 	},
 	formatCounter: function() {
@@ -52,7 +55,12 @@ var BlinkPomo = Backbone.View.extend({
 		'click [role=create-pom]': 'create',
 	},
 	initialize: function(opts) {
-		console.log("id of model", this.model.id);
+		this.ui_create = this.$('[role=create-pom]');
+		if (this.model.get('uuid') !== undefined) {
+			// existing model, try to load
+			this.ui_create.hide();
+			this.model.fetch();
+		}
 		this.gun = opts.gun;
 		this.timer = this.$('[role=timer]');
 		this.model.on('change:seconds', this.render, this)
@@ -103,7 +111,9 @@ var Workspace = Backbone.Router.extend({
 	},
 	pom: function(uuid) {
 		console.log("uuid", uuid);
-		app.chrono = new BlinkPomo({model: new PomModel({id:uuid}), gun: app.gun});
+		var pm = new PomModel({uuid:uuid});
+		console.log("router url", pm.url(), "isnew", pm.isNew());
+		app.chrono = new BlinkPomo({model: pm, gun: app.gun});
 		window.chrono = app.chrono;
 	}
 });
@@ -111,6 +121,7 @@ var Workspace = Backbone.Router.extend({
 app.router = new Workspace();
 
 app.gun.on('pom:start', function(pom) {
+	console.log('sync, pom:start');
 	app.router.navigate("/chrono/" + pom.id);
 });
 

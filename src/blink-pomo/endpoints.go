@@ -12,8 +12,8 @@ import (
 type PomState string
 
 const (
-	start PomState = "started"
-	stop  PomState = "stopped"
+	pomStart PomState = "started"
+	pomStop  PomState = "stopped"
 )
 
 type pomAction struct {
@@ -39,10 +39,10 @@ func (b *BlinkApp) PomStatus(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 	logLine("checking status")
-	if pom.flag == "started" {
+	if pom.state == "started" {
 		res.Write([]byte("#00FF00\n"))
 		return
-	} else if pom.flag == "stopped" {
+	} else if pom.state == "stopped" {
 		res.Write([]byte("#FF0000\n"))
 		return
 	}
@@ -86,10 +86,10 @@ func (b *BlinkApp) UpdatePom(res http.ResponseWriter, req *http.Request) {
 		res.Write([]byte(`{"error": "Invalid Request"}`))
 		return
 	}
-	if action.State == "starting" {
+	if action.State == pomStart {
 		pom.StartTimer()
 		return
-	} else if action.State == "stopping" {
+	} else if action.State == pomStop {
 		pom.StopTimer()
 		return
 	}
