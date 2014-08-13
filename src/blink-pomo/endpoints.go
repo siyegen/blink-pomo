@@ -9,8 +9,15 @@ import (
 	"net/http"
 )
 
+type PomState string
+
+const (
+	start PomState = "started"
+	stop  PomState = "stopped"
+)
+
 type pomAction struct {
-	State string `json:"state"`
+	State PomState `json:"state"`
 }
 
 func jsonEndpoint(handler http.HandlerFunc) http.HandlerFunc {
