@@ -38,11 +38,12 @@ func (b *BlinkApp) PomStatus(res http.ResponseWriter, req *http.Request) {
 		res.Write([]byte("#000000\n"))
 		return
 	}
+
 	logLine("checking status")
-	if pom.state == "started" {
+	if pom.state == pomStart {
 		res.Write([]byte("#00FF00\n"))
 		return
-	} else if pom.state == "stopped" {
+	} else if pom.state == pomStop {
 		res.Write([]byte("#FF0000\n"))
 		return
 	}
@@ -51,10 +52,9 @@ func (b *BlinkApp) PomStatus(res http.ResponseWriter, req *http.Request) {
 
 func (b *BlinkApp) CreateChrono(res http.ResponseWriter, req *http.Request) {
 	pom := NewPom()
-	b.StorePom(pom)
+	b.currentPoms.StorePom(pom)
 
 	logLine(fmt.Sprintf("Creating Pom %s", pom.id))
-	// go pom.StartTimer()
 	res.Write(pom.ToJSON())
 }
 
@@ -86,6 +86,7 @@ func (b *BlinkApp) UpdatePom(res http.ResponseWriter, req *http.Request) {
 		res.Write([]byte(`{"error": "Invalid Request"}`))
 		return
 	}
+
 	if action.State == pomStart {
 		pom.StartTimer()
 		return

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
 	"log"
@@ -17,11 +18,18 @@ type BlinkApp struct {
 }
 
 func NewBlinkApp() *BlinkApp {
-	return &BlinkApp{make(map[string]*Pom)}
+	return &BlinkApp{make(ActivePoms)}
 }
 
-func (b *BlinkApp) StorePom(pom *Pom) {
-	b.currentPoms[pom.id] = pom
+func (a ActivePoms) StorePom(pom *Pom) {
+	a[pom.id] = pom
+}
+func (a ActivePoms) RetrievePom(id string) (*Pom, error) {
+	pom, ok := a[id]
+	if !ok {
+		return nil, errors.New("No Pom by that id")
+	}
+	return pom, nil
 }
 
 func main() {
