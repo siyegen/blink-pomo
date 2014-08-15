@@ -31,10 +31,10 @@ func jsonEndpoint(handler http.HandlerFunc) http.HandlerFunc {
 func (b *BlinkApp) PomStatus(res http.ResponseWriter, req *http.Request) {
 	id := mux.Vars(req)["id"]
 	pom, ok := b.currentPoms[id]
+
 	if !ok {
 		logLine(fmt.Sprintf("No pom: %s", id))
 		res.WriteHeader(http.StatusNotFound)
-		res.Write([]byte(`{"error": "No Pom Found"}`))
 		res.Write([]byte("#000000\n"))
 		return
 	}
